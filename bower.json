@@ -1,0 +1,28 @@
+{
+  "name": "bbls",
+  "description": "bbls gm",
+  "main": "index.js",
+  "authors": [
+    "Piotr Ilski"
+  ],
+  "license": "ISC",
+  "moduleType": [
+    "es6"
+  ],
+  "homepage": "",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "app/bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "traceur-runtime": "^0.0.102",
+    "system.js": "^0.19.22"
+  },
+  "devDependencies": {
+    "es6-module-loader": "^0.17.11"
+  }
+}

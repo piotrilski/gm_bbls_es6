@@ -1,0 +1,6 @@
+{
+  "browser"       : true,   
+  "node"          : false,
+  "jquery"        : true,
+  "esversion"     : 6
+}
