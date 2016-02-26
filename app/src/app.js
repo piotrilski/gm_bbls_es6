@@ -1,19 +1,22 @@
 import Rx from 'rxjs';
-import {Ball} from 'components/ball.js';
-
+import {Ball, BallProvider} from 'components/ball.js';
+import {CannonBall} from 'components/cannon.js';
 
 export class App {
     constructor(canvas) {
         this.canvas = canvas;
         this.subscributions = [];
-        this.balls = [];
         this.context = this.canvas.getContext('2d');
         this.fps = 25;
         this.intervalId = null;
+        this.cannonBall = null;
+        this.ballProvider = new BallProvider(this.context);
     }
     
-    registerEventHandlers(eventName, handler) {
-        this.subscributions[eventName] = Rx.Observable
+    registerMouseEventHandlers(eventName, handler) {
+        if(!this.subscributions[eventName])
+            this.subscributions[eventName] = [];
+        this.subscributions[eventName].push(Rx.Observable
             .fromEvent(this.canvas, eventName)
             .map(ev => {
                 
@@ -24,7 +27,7 @@ export class App {
             })
             .subscribe(
                 handler,
-                this.errorHandler);
+                this.errorHandler));
     }
     
     errorHandler(ex) {
@@ -37,47 +40,31 @@ export class App {
         this.canvas.height = this.canvas.offsetHeight;
         this.canvas.width = this.canvas.offsetWidth;  
         
-        this.registerEventHandlers('click', click => {
+        this.registerMouseEventHandlers('click', click => { 
+            //this.ballProvider.handleClick(click);
             
-            let clickedOnes = this.balls
-                .filter(b => {
-                    return b.xRange.indexOf(click.x) > -1 && 
-                           b.yRange.indexOf(click.y) > -1;
-                });
-            if(clickedOnes.length > 0) {
-                
-                clickedOnes.forEach(b => {
-                    b.hitCount++;   
-                    if(b.hitCount > b.maxHits/2) {                        
-                        let v = Math.floor((b.hitCount - b.maxHits/2))
-                        
-                        b.velocityX = v;
-                        b.velocityY = v;
-                    }
-                    if(b.hitCount == b.maxHits) {
-                        let ind = this.balls.indexOf(b);
-                        this.balls.splice(ind,1);
-                    }                 
-                });
-                
-            } else {
-                let ball = new Ball(click.x, click.y, 20, this.context);
-               
-                ball.initObjectProperties();                
-                
-                this.balls.push(ball);
-            }
+            this.cannonBall.moveTo(click.x, click.y);
         });     
+        
+        this.cannonBall = new CannonBall(
+            Math.floor(this.canvas.width / 2) ,
+            this.canvas.height-20,
+            20,
+            this.context);
+        
+        
     }    
     
     update() {
+        //updating object properties
         
     }
     
     render(interpolation) {
          
          this.context.clearRect(0,0, this.canvas.width, this.canvas.height);
-         this.balls.forEach(b => b.render(interpolation)); 
+         this.ballProvider.balls.forEach(b => b.render(interpolation));
+         this.cannonBall.render(interpolation); 
     }
     
     run() {       
