@@ -23,8 +23,15 @@
         <!--<script src="bower_components/rxjs/dist/rx.lite.js"></script>-->
         
         <!--<script src="src/app.js"></script>-->
-        
+       Can't do anything. There's still something wrong with my account.
+       The only update is that on Friday I was able to log in to myaccess page,
+       and at least to see my resources. Today I'm not, as it is asking me to change the password,
+       and then gives me a message thath I do not have permissions to do such things.
+       So, guys are monitoring my incident, but... Yeah, if anyone of you there can look at it,
+       and maybe try to speed it up a bit  
         <script>
+           
+            
             (function() {
                 'use strict';
                                 
@@ -37,12 +44,22 @@
                 
                 System.import('src/app.js')
                     .then(module => {
+                        let onEachFrame = function(cb) {
+                            var _cb = function() { 
+                                console.log(cb);
+                                cb(); 
+                                requestAnimationFrame(_cb); 
+                            }
+                            _cb();
+                        };
+                       
                         
                         let canvas = document.getElementById('main-canvas');
                         let app = new module.App(canvas);
                         
                         app.init();
-                        app.intervalId = setInterval(app.run(), 0);
+                                           
+                        onEachFrame(app.run());                        
                     })
                     .catch(ex=>{
                         console.error(ex);

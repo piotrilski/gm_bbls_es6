@@ -10,6 +10,7 @@ export class App {
         this.fps = 25;
         this.intervalId = null;
         this.cannonBall = null;
+        this.cannonBallWithoutInterpolation = null;
         this.ballProvider = new BallProvider(this.context);
     }
     
@@ -44,15 +45,24 @@ export class App {
         
         this.registerMouseEventHandlers('click', click => {
             this.cannonBall.moveTo(click.x, click.y);
+            this.cannonBallWithoutInterpolation.moveTo(click.x, click.y);
         });
     }    
     
     initCannonBall() {
+        this.cannonBallWithoutInterpolation = new CannonBall(
+            Math.floor(this.canvas.width / 2) ,
+            this.canvas.height-20,
+            20,
+            this.context,
+            "#ffc0de"); 
+        
         this.cannonBall = new CannonBall(
             Math.floor(this.canvas.width / 2) ,
             this.canvas.height-20,
             20,
-            this.context);
+            this.context,
+            "#5bc0de");
     }
     
     updateCannonBall(cannonBall) {
@@ -73,7 +83,7 @@ export class App {
                 return cannonBall.y <= cannonBall.destination.y;
             };
         
-      
+        
         
         if(compareX() && compareY()) {
             cannonBall.velocity = {
@@ -85,7 +95,8 @@ export class App {
     }
     
     update() {        
-        this.updateCannonBall(this.cannonBall);        
+        this.updateCannonBall(this.cannonBall);      
+        this.updateCannonBall(this.cannonBallWithoutInterpolation); 
     }
     
     render(interpolation) {
@@ -93,11 +104,12 @@ export class App {
          this.context.clearRect(0,0, this.canvas.width, this.canvas.height);
          this.ballProvider.balls.forEach(b => b.render(interpolation));
          this.cannonBall.render(interpolation); 
+         this.cannonBallWithoutInterpolation.renderWithoutInterpolation(1);
     }
     
     run() {       
         let loops = 0;
-        let skipTics = 1000 / this.fps;            
+        let skipTics = 1000 / 30;            
         let nextGameTick = new Date().getTime();
         // let maxFrameSkip = 10;
         // let lastGameTick;
@@ -115,7 +127,7 @@ export class App {
                 loops++;
             }
             
-            if(!loops) {
+            if(!loops) {                
                 that.render((nextGameTick - new Date().getTime()) / skipTics);
             } else {
                 that.render(0);
