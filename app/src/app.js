@@ -40,24 +40,52 @@ export class App {
         this.canvas.height = this.canvas.offsetHeight;
         this.canvas.width = this.canvas.offsetWidth;  
         
-        this.registerMouseEventHandlers('click', click => { 
-            //this.ballProvider.handleClick(click);
-            
-            this.cannonBall.moveTo(click.x, click.y);
-        });     
+        this.initCannonBall();
         
+        this.registerMouseEventHandlers('click', click => {
+            this.cannonBall.moveTo(click.x, click.y);
+        });
+    }    
+    
+    initCannonBall() {
         this.cannonBall = new CannonBall(
             Math.floor(this.canvas.width / 2) ,
             this.canvas.height-20,
             20,
             this.context);
-        
-        
-    }    
+    }
     
-    update() {
-        //updating object properties
+    updateCannonBall(cannonBall) {
         
+        let compareX = cannonBall.velocity.x > 0 ? 
+            function() {
+                return cannonBall.x >= cannonBall.destination.x;
+            } : 
+            function() {
+                return cannonBall.x <= cannonBall.destination.x;
+            };
+            
+        let compareY = cannonBall.velocity.y > 0 ? 
+            function() {
+                return cannonBall.y >= cannonBall.destination.y;
+            } : 
+            function() {
+                return cannonBall.y <= cannonBall.destination.y;
+            };
+        
+      
+        
+        if(compareX() && compareY()) {
+            cannonBall.velocity = {
+                x:0,
+                y:0
+            };
+        }
+         
+    }
+    
+    update() {        
+        this.updateCannonBall(this.cannonBall);        
     }
     
     render(interpolation) {

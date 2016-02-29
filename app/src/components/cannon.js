@@ -22,17 +22,7 @@ export class CannonBall {
        let circle = new Path2D();
        
        this.x = this.x + this.velocity.x * interpolation;          
-       this.y = this.y + this.velocity.y * interpolation;   
-       
-      // console.log(Math.floor(this.x), this.destination.x);
-       
-       if(Math.floor(this.x) === this.destination.x && 
-          Math.floor(this.y) === this.destination.y) {
-           this.velocity = {
-               x:0,
-               y:0
-           };
-       }
+       this.y = this.y + this.velocity.y * interpolation; 
        
        circle.arc(
             this.x,
@@ -64,7 +54,6 @@ export class CannonBall {
         this.destination.y = y;
         
         console.log(this.velocity);
-        //for(i = this.x, i < x)
     }
     
     
