@@ -9,20 +9,25 @@ export class CannonBall {
             y:0
         };
         
-        this.speed = 25; // px/frame
+        this.speed = 0.8; 
         this.color = color;
         //no destination at start
         this.destination = {
             x:this.x,
             y:this.y
         };
+        
+        this.lastFramePosition = {
+            x:this.x,
+            y:this.t
+        };
     }
     
     renderWithoutInterpolation() {
         let circle = new Path2D();
        
-        this.x = this.x + this.velocity.x;          
-        this.y = this.y + this.velocity.y;
+        this.x = this.destination.x;          
+        this.y = this.destination.y;
     
         // this.x = (1-interpolation) * this.x + this.destination.x * interpolation;          
         // this.y = (1-interpolation) * this.y + this.destination.y * interpolation;  
@@ -40,13 +45,22 @@ export class CannonBall {
         this.context.fill(circle);
     }
     
+    smoothstep(x) {
+        return x*x*(3 - 2*x);
+    }
+    
     render(interpolation) {
        let circle = new Path2D();
        
-       this.x = this.x + this.velocity.x * interpolation;          
-       this.y = this.y + this.velocity.y * interpolation;
-    
        
+    //    
+    //    let dx = Math.abs(this.destination.x - this.x);
+    //    let dy = Math.abs(this.destination.y - this.y);
+    //    let int = (dx+dy) > 0 ?  this.smoothstep(interpolation/(dx+dy)*10) : interpolation; 
+       
+       //console.log(interpolation,int);
+       this.x = this.lastFramePosition.x + (this.x - this.lastFramePosition.x) * interpolation;
+       this.y = this.lastFramePosition.y + (this.y - this.lastFramePosition.y) * interpolation;        
        
        circle.arc(
             this.x,
@@ -81,9 +95,7 @@ export class CannonBall {
         this.velocity.y = vY;
         
         this.destination.x = x;
-        this.destination.y = y;
-        
-        console.log(this.velocity);
+        this.destination.y = y;        
     }
     
     

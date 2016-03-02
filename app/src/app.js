@@ -7,8 +7,10 @@ export class App {
         this.canvas = canvas;
         this.subscributions = [];
         this.context = this.canvas.getContext('2d');
-        this.fps = 25;
-        this.intervalId = null;
+        
+        this.panic = false;
+        
+        
         this.cannonBall = null;
         this.cannonBallWithoutInterpolation = null;
         this.ballProvider = new BallProvider(this.context);
@@ -53,7 +55,7 @@ export class App {
         this.cannonBallWithoutInterpolation = new CannonBall(
             Math.floor(this.canvas.width / 2) ,
             this.canvas.height-20,
-            20,
+            5,
             this.context,
             "#ffc0de"); 
         
@@ -65,38 +67,52 @@ export class App {
             "#5bc0de");
     }
     
-    updateCannonBall(cannonBall) {
+    
+    
+    updateCannonBall(cannonBall, deltaTime) {
+        cannonBall.lastFramePosition.x = cannonBall.x;
+        cannonBall.lastFramePosition.y = cannonBall.y;
         
-        let compareX = cannonBall.velocity.x > 0 ? 
-            function() {
-                return cannonBall.x >= cannonBall.destination.x;
-            } : 
-            function() {
-                return cannonBall.x <= cannonBall.destination.x;
-            };
+        cannonBall.x += cannonBall.velocity.x * deltaTime;
+        cannonBall.y += cannonBall.velocity.y * deltaTime;
+       
+        //console.log(deltaTime, cannonBall.x, cannonBall.y);
+        if(cannonBall.velocity.x !== 0 &&
+           cannonBall.velocity.y !== 0) {
+            let compareX = cannonBall.velocity.x > 0 ? 
+                function() {
+                    return cannonBall.x >= cannonBall.destination.x;
+                } : 
+                function() {
+                    return cannonBall.x <= cannonBall.destination.x;
+                };
+                
+            let compareY = cannonBall.velocity.y > 0 ? 
+                function() {
+                    return cannonBall.y >= cannonBall.destination.y;
+                } : 
+                function() {
+                    return cannonBall.y <= cannonBall.destination.y;
+                };
             
-        let compareY = cannonBall.velocity.y > 0 ? 
-            function() {
-                return cannonBall.y >= cannonBall.destination.y;
-            } : 
-            function() {
-                return cannonBall.y <= cannonBall.destination.y;
-            };
-        
-        
-        
-        if(compareX() && compareY()) {
-            cannonBall.velocity = {
-                x:0,
-                y:0
-            };
+            
+            if(compareX()) {
+                cannonBall.velocity.x = 0;
+                cannonBall.x = cannonBall.destination.x;
+            }
+            
+            if(compareY()) {
+                cannonBall.velocity.y = 0;
+                cannonBall.y = cannonBall.destination.y;
+            }
+            
         }
-         
     }
     
-    update() {        
-        this.updateCannonBall(this.cannonBall);      
-        this.updateCannonBall(this.cannonBallWithoutInterpolation); 
+    update(deltaTime) {
+        this.updateCannonBall(this.cannonBall, deltaTime);      
+        this.updateCannonBall(this.cannonBallWithoutInterpolation);
+        
     }
     
     render(interpolation) {
@@ -104,36 +120,79 @@ export class App {
          this.context.clearRect(0,0, this.canvas.width, this.canvas.height);
          this.ballProvider.balls.forEach(b => b.render(interpolation));
          this.cannonBall.render(interpolation); 
-         this.cannonBallWithoutInterpolation.renderWithoutInterpolation(1);
+         this.cannonBallWithoutInterpolation.renderWithoutInterpolation();
     }
     
-    run() {       
-        let loops = 0;
-        let skipTics = 1000 / 30;            
-        let nextGameTick = new Date().getTime();
-        // let maxFrameSkip = 10;
-        // let lastGameTick;
+    updateNotTimeDependent(timestamp, frameDelta) {
         
+    }
+        
+    panicFunction(fps, panic, frameDelta) {
+        
+        if(this.panic) {
+            console.error("!!!!!PANIC!!!!", fps, frameDelta);
+            frameDelta = 0;
+        }
+    }        
+        
+    run() {       
+        let simulationTimestep = 1000 / 60;
+        let frameDelta = 0;
+        let lastFrameTimeMs = 0;
+        let fps = 60;
+        let lastFpsUpdate = 0;
+        let framesThisSecond = 0;
+        let numUpdateSteps = 0;
+        let minFrameDelay = 0;
+    
+        let that = this;
+        let update = that.update.bind(that);
+        let render = that.render.bind(that);  
+        let updateNotTimeDependent = that.updateNotTimeDependent.bind(that);
+        let panicFunction = that.panicFunction.bind(that);
+                       
         console.log("Running...");     
         
-        var wrapper =  function() {
-            let that = this;
-            loops = 0;
-                 
-            while(new Date().getTime() > nextGameTick) {
-                that.update();
-                
-                nextGameTick += skipTics;
-                loops++;
+        function frameLoop(timestamp) {            
+            
+            requestAnimationFrame(frameLoop);
+            
+            if(timestamp < lastFrameTimeMs + minFrameDelay) {
+                return;
             }
             
-            if(!loops) {                
-                that.render((nextGameTick - new Date().getTime()) / skipTics);
-            } else {
-                that.render(0);
+            frameDelta += timestamp - lastFrameTimeMs;
+            lastFrameTimeMs = timestamp;
+            
+            updateNotTimeDependent(timestamp, frameDelta);            
+            
+            //estimated framerate
+            if(timestamp > lastFpsUpdate + 1000) {
+                fps = 0.25 * framesThisSecond + 0.75 * fps;
+                lastFpsUpdate = timestamp;
+                framesThisSecond = 0;
             }
-        };
+            
+            framesThisSecond++;
+            numUpdateSteps = 0;
+            
+            while(frameDelta >= simulationTimestep) {
+                
+                update(simulationTimestep);
+                frameDelta -= simulationTimestep;
+                
+                if(++numUpdateSteps >= 240) {                    
+                    that.panic = true;
+                    break;
+                }
+            }
+            
+            render(frameDelta/simulationTimestep);
+            
+            panicFunction(fps, that.panic, frameDelta);
+            that.panic = false;
+        }
         
-        return wrapper.bind(this);
+        requestAnimationFrame(frameLoop.bind(that));
     }
 }
